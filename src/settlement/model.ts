@@ -1,5 +1,6 @@
 import type { Scene, ScenePoint } from '../scene/scene.js';
 import type { DevelopmentProfile } from './development.js';
+import type { ConstrainedLayoutMetadata } from './constraints/types.js';
 
 export interface SettlementBuilding {
   id: string;
@@ -40,6 +41,8 @@ export interface SettlementModel {
     outsideWalls: ResidentAccount;
   };
   diagnostics: string[];
+  /** Present only for explicitly constrained physical frontage layouts. */
+  constraints?: ConstrainedLayoutMetadata;
 }
 
 /** Deterministic allocation within each enclosure. Never borrow capacity across a wall target. */

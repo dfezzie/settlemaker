@@ -58,6 +58,13 @@ export interface SymbolInstance {
 }
 
 export interface RoadFeature {
+  id?: string;
+  reservedWidthM?: number;
+  surfaceWidthM?: number;
+  setbackM?: number;
+  fromNodeId?: string;
+  toNodeId?: string;
+  crossingId?: string;
   routeIds?: string[];
   path: ScenePoint[];
   /** artery = trunk; road = external approach; alley = local street or block service lane. */

@@ -7,8 +7,10 @@ import { skinBiomeFor } from '../assets/skins.js';
 import { resolveDevelopment, type DevelopmentOptions } from './development.js';
 import { allocateResidents, type SettlementModel } from './model.js';
 import { blockLayout, frontageLayout } from './layouts.js';
-import { dressSettlement } from './landscape.js';
+import { dressSettlement, groupSettlementWater } from './landscape.js';
 import { exportSettlement, renderSettlement, type SettlementGeoJson, type SettlementRenderOptions } from './output.js';
+import { createConstrainedSettlementModel, SettlementConstraintError } from './constraints/index.js';
+import type { SettlementConstraints } from './constraints/types.js';
 
 export interface SettlementOptions {
   development: DevelopmentOptions;
@@ -17,6 +19,9 @@ export interface SettlementOptions {
   style?: Partial<RenderTheme>;
   skin?: SettlementSkin;
   render?: Pick<SettlementRenderOptions, 'width' | 'bounds' | 'detail'>;
+  /** Explicit false skips fields, vegetation AND dressing's road mutations. */
+  landscape?: boolean;
+  constraints?: SettlementConstraints;
 }
 export interface PlannedSettlement {
   kind: 'planned';
@@ -28,6 +33,14 @@ export interface PlannedSettlement {
 /** One physical planning pipeline. The development preset selects a layout
  * technique, followed by common resident, landscape, rendering and export stages. */
 export function createSettlementModel(input: AzgaarBurgInput, options: SettlementOptions): SettlementModel {
+  const descriptor=Object.getOwnPropertyDescriptor(options,'constraints');
+  if(descriptor&&!('value' in descriptor))throw new TypeError('options.constraints: accessor');
+  if(!descriptor&&'constraints' in options)throw new TypeError('options.constraints: inherited property');
+  if(descriptor?.value!==undefined) {
+    const result=createConstrainedSettlementModel(input,options);
+    if(!result.ok){const error=new SettlementConstraintError(result.diagnostics[0]);error.result=result;throw error;}
+    return result.model;
+  }
   const development = resolveDevelopment(input.population, input.walls, options.development);
   if (options.theme !== undefined) paletteForTheme(options.theme);
   const seed = options.seed ?? mapToGenerationParams(input).seed;
@@ -47,7 +60,8 @@ export function createSettlementModel(input: AzgaarBurgInput, options: Settlemen
     layout = blockLayout(effective, seed, development, supply, land);
     residents = allocateResidents(layout.buildings, input.population, development.corePopulation);
   }
-  dressSettlement(layout, seed);
+  if(options.landscape!==false)dressSettlement(layout, seed);
+  else groupSettlementWater(layout);
   const diagnostics = [...layout.diagnostics];
   if (residents.unassigned) diagnostics.push(`${residents.unassigned} residents could not be accommodated within the requested enclosure and available land`);
   const model: SettlementModel = { version: 1, name: input.name, seed, development, coordinateSystem: 'local_metres_y_down',

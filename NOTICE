@@ -150,3 +150,12 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <http://unlicense.org>
+
+
+FORK MODIFICATIONS — 2026-10-10
+--------------------------------
+The dfezzie/settlemaker fork adds bounded terrain-constrained physical
+settlement layouts, complete-shape callback certificates, exact road joins,
+structured metadata/validation, and a cooperative road-edge test harness.
+The browser build records its immutable corresponding-source revision.
+Upstream engine and dependency notices above remain applicable.

@@ -12,7 +12,7 @@
     "build:art": "node scripts/build-runtime-art.mjs",
     "review:art": "npm run build && node scripts/review-artwork.mjs",
     "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json",
-    "build:lib": "esbuild src/index.ts --bundle --format=esm --target=es2022 --minify --outfile=dist/settlemaker.browser.js --banner:js=\"/* settlemaker \u2014 GPL-3.0-only. Corresponding source: https://github.com/barrulus/settlemaker */\"",
+    "build:lib": "node scripts/build-lib.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "review:roads": "node scripts/run-road-review.mjs",
@@ -69,7 +69,8 @@
     "scripts/check-docs.mjs",
     "scripts/generate-copperline.mjs",
     "scripts/render-copperline.mjs",
-    "scripts/settlemaker.mjs"
+    "scripts/settlemaker.mjs",
+    "scripts/build-lib.mjs"
   ],
   "dependencies": {
     "@types/geojson": "^7946.0.14",

@@ -42,6 +42,7 @@ export type SettlementGeoJson = FeatureCollection & { metadata: {
   residents: SettlementModel['residents'];
   development: SettlementModel['development'];
   seed: number;
+  constraints?: SettlementModel['constraints'];
 } };
 
 /** Export the very same geometry the renderer consumes. This is a distinct,
@@ -62,7 +63,8 @@ export function exportSettlement(model: SettlementModel): SettlementGeoJson {
     polygon(id, b.ring, { layer: 'building', building_id: id, kind: b.kind, capacity: account?.capacity ?? 0, residents: account?.residents ?? 0,
       district_id: account?.districtId ?? null, inside_walls: account?.insideWalls ?? false, urbanity: account?.urbanity ?? null });
   }
-  for (const [i, r] of L.roads.entries()) line(`street:${i}`, r.path, { layer: 'street', street_id: `street:${i}`, streetType: r.kind, width: r.width ?? 3, route_ids: r.routeIds ?? [] });
+  for (const [i, r] of L.roads.entries()) { const id=r.id??`street:${i}`;line(id, r.path, { layer: 'street', street_id: id, streetType: r.kind, width: r.width ?? 3, route_ids: r.routeIds ?? [],
+    ...(r.reservedWidthM!==undefined?{reserved_width_m:r.reservedWidthM,surface_width_m:r.surfaceWidthM,setback_m:r.setbackM,from_node_id:r.fromNodeId,to_node_id:r.toNodeId,crossing_id:r.crossingId??null}:{}) }); }
   for (const [i, f] of L.fields.entries()) polygon(`field:${i}`, f.ring, { layer: 'field', glyph: f.glyph, bearing_deg: f.angleDeg });
   for (const [i, g] of L.greens.entries()) { polygon(`green:${i}`, g.ring, { layer: 'green', ...(g.surface ? {surface:g.surface} : {}) }); for (const [j, p] of (g.paths ?? []).entries()) line(`green:${i}:path:${j}`, p, { layer: 'path', width: g.pathWidth }); }
   for (const [i, v] of L.vegetation.entries()) point(`vegetation:${i}`, v.at, { layer: 'vegetation', glyph: v.kind, width_m: v.scale, bearing_deg: v.rotationDeg });
@@ -72,10 +74,12 @@ export function exportSettlement(model: SettlementModel): SettlementGeoJson {
     for (const [j, p] of w.polylines.entries()) line(`wall:${i}:${j}`, p, { layer: 'wall', material: w.material });
     for (const [j, g] of w.gates.entries()) line(`gate:${i}:${j}`, [g.p1, g.p2], { layer: 'entrance', route_ids: g.routeIds });
   }
+  for(const e of model.constraints?.entrances??[])point(e.id,e.endpoint,{layer:'entrance',entrance_id:e.id,route_ids:[...e.routeIds],bearing_deg:e.bearingDeg,reserved_width_m:e.widthM,surface_width_m:e.surfaceWidthM,setback_m:e.setbackM,node_id:e.nodeId,street_id:e.streetId});
   for (const d of model.districts) polygon(d.id, d.boundary, { layer: 'district', district_id: d.id, urbanity: d.urbanity, inside_walls: d.insideWalls });
   for (const [i, s] of L.symbols.entries()) point(`symbol:${i}`, s.at, { layer: 'symbol', glyph: s.id, building_id: s.buildingId, width_m: s.scale, height_m: s.scaleY ?? s.scale, bearing_deg: s.rotationDeg });
-  for (const b of L.bridges ?? []) line(b.id, b.path, { layer: 'bridge', width: b.width });
+  for (const b of L.bridges ?? []) { const authority=model.constraints?.crossings.find(c=>c.id===b.id);line(b.id, b.path, { layer: 'bridge', width: b.width,
+    ...(authority?{water_id:authority.waterId,street_ids:authority.streetIds,route_ids:authority.routeIds,reserved_width_m:authority.widthM,endpoint_heights_m:authority.endpointHeightsM,minimum_abutment_m:authority.minimumAbutmentM}:{}) }); }
   return { type: 'FeatureCollection', features, metadata: { schema: 'settlemaker/physical-plan', schema_version: 1, coordinate_system: 'local_metres_y_down', coordinate_units: 'metres',
     local_bounds: { ...model.scene.bounds }, scale: { meters_per_unit: 1, source: 'physical_layout_v1' }, residents: structuredClone(model.residents),
-    development: { ...model.development }, seed: model.seed } };
+    development: { ...model.development }, seed: model.seed, ...(model.constraints?{constraints:structuredClone(model.constraints)}:{}) } };
 }

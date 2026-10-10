@@ -14,9 +14,9 @@ import { growApronPath } from '../village/skeleton/apron.js';
 
 /** Both layout techniques hand their occupied ground to the same field and
  * woodland planner. No pixel scale or population-to-diameter conversion. */
-export function dressSettlement(layout: Layout, seed: number): void {
-  const { scene, site, green } = layout;
-  const L = scene.layers;
+export function groupSettlementWater(layout: Layout): void {
+  const { scene, site } = layout;
+  const L=scene.layers;
   if (site.water.length) {
     const supplied = waterFillPolygons(site.water);
     const rings = site.water.map(r => [r.map(p => [p.x, p.y] as [number, number])]);
@@ -25,6 +25,11 @@ export function dressSettlement(layout: Layout, seed: number): void {
     L.water.polygons = polygons;
     L.water.rings = polygons.flat();
   }
+}
+export function dressSettlement(layout: Layout, seed: number): void {
+  const { scene, site, green } = layout;
+  const L = scene.layers;
+  groupSettlementWater(layout);
   const lots: Lot[] = L.buildings.map((b, i) => {
     const xs = b.ring.map(p => p.x), ys = b.ring.map(p => p.y);
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
