@@ -256,6 +256,16 @@ entrance mouths and full crossing abutment disks.
 
 ## Focused evidence and handoff boundary
 
+The complete test harness bounds file concurrency to two workers. The original
+exhaustive road-edge corpus still checks every population/seed/through-route
+combination, yields after each complete case and retains all four assertions
+and the existing 60-second deadlines. A clean unrestricted run reached those
+deadlines under contention; the two heaviest files together then passed all nine
+tests in 159.59 s with two workers and no worker-reporting errors. The two
+previously timed-out cases took 39.81 s and 40.25 s. This limits test resource
+contention and does not change generation or reduce the corpus. Final complete
+clean-suite acceptance is recorded by the Kriegsspiel coordinator.
+
 Commands below run with the Kriegsspiel root as shell cwd; `npm --prefix` selects
 the existing fork tools. No dependencies were installed.
 

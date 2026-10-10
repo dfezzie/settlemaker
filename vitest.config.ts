@@ -4,6 +4,10 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     setupFiles: ['./tests/setup.ts'],
+    // Exhaustive village corpora are CPU-bound. Keep two files active so their
+    // unchanged 60-second deadlines and worker reporting do not compete with
+    // every other large corpus at once (clean M3 full-suite validation).
+    maxWorkers: 2,
     // Fix round 1 of the R20 debt (2026-08-21): MAX_FEEDBACK_ROUNDS went
     // 3 -> 4 to restore full-census village housing after the
     // seatEfficiency fix. That is real extra work across every village
