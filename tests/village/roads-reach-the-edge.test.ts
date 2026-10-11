@@ -3,6 +3,7 @@
  * measured on the shipped model rather than on any one stage of it.
  */
 import { describe, it, expect } from 'vitest';
+import { setTimeout } from 'node:timers/promises';
 import { generateVillage } from '../../src/village/village-model.js';
 import { isApron } from '../../src/village/types.js';
 import { computeFrame } from '../../src/village/frame.js';
@@ -24,12 +25,14 @@ const burg = (population: number, through: boolean): AzgaarBurgInput => ({
 
 /** Exercise one terminating approach and a continuing connection with two
  * independently measured sides. Both must reach the rendered frame. */
-const each = (fn: (m: ReturnType<typeof generateVillage>, label: string) => void): void => {
+const each = async (fn: (m: ReturnType<typeof generateVillage>, label: string) => void): Promise<void> => {
   for (const through of [false, true]) {
     for (const pop of POPS) {
       for (const seed of SEEDS) {
         fn(generateVillage(burg(pop, through), seed),
           `pop ${pop} seed ${seed}${through ? ' through' : ''}`);
+        // Service worker reporting between complete cases without changing the grid.
+        await setTimeout(0);
       }
     }
   }
@@ -120,8 +123,8 @@ describe('roads reach the edge of the tile', () => {
    * same hop covers a crossing split, whose outer half starts where the
    * inner half was cut.
    */
-  it('every contract entry has a road that reaches the frame boundary', () => {
-    each((m, label) => {
+  it('every contract entry has a road that reaches the frame boundary', async () => {
+    await each((m, label) => {
       const aprons = m.lanes.filter((l) => isApron(l.id));
       const reaches = (lane: typeof aprons[number], seen: Set<string>): boolean => {
         if (excusedByCoast(lane.id, m.diagnostics)) return true;
@@ -146,10 +149,10 @@ describe('roads reach the edge of the tile', () => {
     });
   });
 
-  it('the overshoot was always long enough to be clipped', () => {
+  it('the overshoot was always long enough to be clipped', async () => {
     // If an apron was never clipped it ran out of drawn road before it
     // reached the frame, and APRON_REACH_FACTOR is too small.
-    each((m, label) => {
+    await each((m, label) => {
       const { minX, minY, maxX, maxY } = m.frame;
       for (const a of m.lanes.filter((l) => isApron(l.id))) {
         const tip = a.points[a.points.length - 1];
@@ -160,8 +163,8 @@ describe('roads reach the edge of the tile', () => {
     });
   });
 
-  it('nothing is built on an apron', () => {
-    each((m, label) => {
+  it('nothing is built on an apron', async () => {
+    await each((m, label) => {
       const apronIds = new Set(m.lanes.filter((l) => isApron(l.id)).map((l) => l.id));
       expect(m.lots.filter((l) => apronIds.has(l.laneId)), `${label}: lots on an apron`)
         .toHaveLength(0);
@@ -174,8 +177,8 @@ describe('roads reach the edge of the tile', () => {
     });
   });
 
-  it('the frame does not move when the aprons are taken away', () => {
-    each((m, label) => {
+  it('the frame does not move when the aprons are taken away', async () => {
+    await each((m, label) => {
       const without = computeFrame({
         lanes: m.lanes.filter((l) => !isApron(l.id)),
         buildings: m.buildings.map((b) => b.position),

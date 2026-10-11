@@ -301,3 +301,12 @@ export type { RouteType } from './village/route-class.js';
 export type { DeckEntry } from './village/deck.js';
 
 export { ARTWORK_GLYPHS, ARTWORK_MANIFEST, ARTWORK_INK } from './assets/artwork.js';
+
+export {
+  createConstrainedSettlementModel,
+  validateConstrainedSettlementModel,
+  SettlementConstraintError,
+  DEFAULT_CONSTRAINT_LIMITS,
+  CONSTRAINT_VERSION,
+} from './settlement/constraints/index.js';
+export type * from './settlement/constraints/types.js';
